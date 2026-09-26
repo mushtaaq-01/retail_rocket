@@ -11,26 +11,37 @@ async function getWorkingBaseUrl() {
     return customUrl.trim().replace(/\/+$/, '');
   }
 
-  // Deployed on Vercel or any cloud domain -> connect to live Render backend
+  // Production or Vercel deployment: relative '/api' calls Vercel serverless backend
   if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return PRODUCTION_BACKEND_URL;
-  }
-
-  // Local development -> use Vite dev proxy
-  if (typeof window !== 'undefined') {
     return '/api';
   }
 
-  return "http://127.0.0.1:8088";
+  // Local development -> Vite proxy redirects /api to configured backend port
+  return '/api';
 }
 
 export async function getHealth() {
   const baseUrl = await getWorkingBaseUrl();
-  const response = await fetch(`${baseUrl}/health`);
-  if (!response.ok) {
-    throw new Error("API offline");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const response = await fetch(`${baseUrl}/health`, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    if (!response.ok) {
+      throw new Error("API offline");
+    }
+    return await response.json();
+  } catch (err) {
+    clearTimeout(timeoutId);
+    // If relative /api failed and we have an external backup (Render), try it
+    if (baseUrl === '/api' && typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+      try {
+        const backupRes = await fetch(`${PRODUCTION_BACKEND_URL}/health`);
+        if (backupRes.ok) return await backupRes.json();
+      } catch {}
+    }
+    throw err;
   }
-  return await response.json();
 }
 
 export async function getRecommendations(visitorId, limit = 10) {
