@@ -5,9 +5,14 @@ import { trackAddToCart, trackRemoveFromCart } from './tracker';
 const PORTS = [8088, 8085, 8082, 8000, 8001];
 let cachedPort = null;
 
+const PRODUCTION_BACKEND_URL = 'https://retail-rocket.onrender.com';
+
 async function getBaseApiUrl() {
   const customUrl = localStorage.getItem('rr_api_url') || import.meta.env?.VITE_API_URL;
   if (customUrl && customUrl.trim()) return customUrl.trim().replace(/\/+$/, '');
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return PRODUCTION_BACKEND_URL;
+  }
   if (typeof window !== 'undefined') return '/api';
   return 'http://127.0.0.1:8088';
 }

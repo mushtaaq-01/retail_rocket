@@ -3,13 +3,20 @@ import { supabase, isSupabaseConfigured } from './supabaseClient';
 const PORTS = [8088, 8085, 8082, 8000, 8001];
 let cachedWorkingPort = null;
 
+const PRODUCTION_BACKEND_URL = 'https://retail-rocket.onrender.com';
+
 async function getWorkingBaseUrl() {
   const customUrl = localStorage.getItem('rr_api_url') || import.meta.env?.VITE_API_URL;
   if (customUrl && customUrl.trim()) {
     return customUrl.trim().replace(/\/+$/, '');
   }
 
-  // Universal relative /api route works across Vite dev proxy and Vercel serverless
+  // Deployed on Vercel or any cloud domain -> connect to live Render backend
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return PRODUCTION_BACKEND_URL;
+  }
+
+  // Local development -> use Vite dev proxy
   if (typeof window !== 'undefined') {
     return '/api';
   }
