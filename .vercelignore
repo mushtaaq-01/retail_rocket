@@ -1,0 +1,13 @@
+# Ignore Python backend files so Vercel builds only the React frontend
+api/
+main.py
+ml/
+model/
+data/
+requirements.txt
+Dockerfile
+render.yaml
+docker-compose.yml
+test*.py
+generate_events.py
+supabase/
