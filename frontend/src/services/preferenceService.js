@@ -14,25 +14,8 @@ async function getWorkingBaseUrl() {
     return customUrl.trim().replace(/\/+$/, '');
   }
 
-  // When deployed on Vercel or cloud domain (non-localhost)
-  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return `${window.location.origin}/api`;
-  }
-
-  if (cachedWorkingPort) {
-    return `http://127.0.0.1:${cachedWorkingPort}`;
-  }
-
-  for (const port of PORTS) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(1500) });
-      if (res.ok) {
-        cachedWorkingPort = port;
-        return `http://127.0.0.1:${port}`;
-      }
-    } catch {
-      // try next port
-    }
+  if (typeof window !== 'undefined') {
+    return '/api';
   }
 
   return "http://127.0.0.1:8088";

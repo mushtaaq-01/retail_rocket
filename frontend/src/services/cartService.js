@@ -8,21 +8,7 @@ let cachedPort = null;
 async function getBaseApiUrl() {
   const customUrl = localStorage.getItem('rr_api_url') || import.meta.env?.VITE_API_URL;
   if (customUrl && customUrl.trim()) return customUrl.trim().replace(/\/+$/, '');
-  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return `${window.location.origin}/api`;
-  }
-  if (cachedPort) return `http://127.0.0.1:${cachedPort}`;
-  for (const port of PORTS) {
-    try {
-      const res = await fetch(`http://127.0.0.1:${port}/health`, { signal: AbortSignal.timeout(800) });
-      if (res.ok) {
-        cachedPort = port;
-        return `http://127.0.0.1:${port}`;
-      }
-    } catch {
-      // ignore
-    }
-  }
+  if (typeof window !== 'undefined') return '/api';
   return 'http://127.0.0.1:8088';
 }
 
