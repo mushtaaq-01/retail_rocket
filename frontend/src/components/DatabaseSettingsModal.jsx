@@ -25,6 +25,7 @@ export default function DatabaseSettingsModal({ isOpen, onClose, theme = 'light'
   const [activeSubTab, setActiveSubTab] = useState('config'); // 'config' | 'schema' | 'tables'
   const [url, setUrl] = useState('');
   const [key, setKey] = useState('');
+  const [apiUrl, setApiUrl] = useState('');
   const [status, setStatus] = useState({ connected: false, configured: false, message: '' });
   const [testing, setTesting] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -32,8 +33,9 @@ export default function DatabaseSettingsModal({ isOpen, onClose, theme = 'light'
   useEffect(() => {
     if (isOpen) {
       const cfg = getSupabaseConfig();
-      setUrl(localStorage.getItem('rr_supabase_url') || cfg.url || '');
-      setKey(localStorage.getItem('rr_supabase_key') || '');
+      setUrl(localStorage.getItem('rr_supabase_url') || cfg.url || 'https://fkoenadkhgevcrycfhan.supabase.co');
+      setKey(localStorage.getItem('rr_supabase_key') || 'sb_publishable_iqk-JN3bl1ajtXdJDL2qbA_AaWUwDHb');
+      setApiUrl(localStorage.getItem('rr_api_url') || import.meta.env?.VITE_API_URL || '');
       checkStatus();
     }
   }, [isOpen]);
@@ -50,9 +52,16 @@ export default function DatabaseSettingsModal({ isOpen, onClose, theme = 'light'
     setTesting(true);
     updateSupabaseCredentials(url, key);
 
+    if (apiUrl && apiUrl.trim()) {
+      localStorage.setItem('rr_api_url', apiUrl.trim().replace(/\/+$/, ''));
+    } else {
+      localStorage.removeItem('rr_api_url');
+    }
+
     // Also inform backend if reachable
     try {
-      await fetch('http://127.0.0.1:8088/db/configure', {
+      const targetApi = apiUrl ? apiUrl.trim().replace(/\/+$/, '') : 'http://127.0.0.1:8088';
+      await fetch(`${targetApi}/db/configure`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url, key })
@@ -284,6 +293,24 @@ CREATE TABLE IF NOT EXISTS public.recommendations (
                   }`}
                 />
                 <p className="text-[10px] text-slate-400">The public anon key is safe for client applications with Row Level Security (RLS).</p>
+              </div>
+
+              {/* Backend API URL */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <Server className="w-3.5 h-3.5 text-cyan-500" />
+                  FastAPI Recommendation Backend URL
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://retailrocket-backend.onrender.com (or leave empty for local auto-probe)"
+                  value={apiUrl}
+                  onChange={(e) => setApiUrl(e.target.value)}
+                  className={`w-full px-3.5 py-2.5 rounded-xl border text-xs font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
+                    isLight ? 'bg-slate-50 border-slate-200 text-slate-900' : 'bg-slate-800 border-slate-700 text-slate-100'
+                  }`}
+                />
+                <p className="text-[10px] text-slate-400">Enter your deployed Render backend URL (e.g. https://your-app.onrender.com) so the frontend connects live.</p>
               </div>
 
               {/* Action Buttons */}

@@ -7,8 +7,9 @@ const PORTS = [8088, 8085, 8082, 8000, 8001];
 let cachedWorkingPort = null;
 
 async function getWorkingBaseUrl() {
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
+  const customUrl = localStorage.getItem('rr_api_url') || import.meta.env?.VITE_API_URL;
+  if (customUrl && customUrl.trim()) {
+    return customUrl.trim().replace(/\/+$/, '');
   }
   if (cachedWorkingPort) {
     return `http://127.0.0.1:${cachedWorkingPort}`;
