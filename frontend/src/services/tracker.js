@@ -11,6 +11,12 @@ async function getWorkingBaseUrl() {
   if (customUrl && customUrl.trim()) {
     return customUrl.trim().replace(/\/+$/, '');
   }
+
+  // When deployed on Vercel or cloud domain (non-localhost)
+  if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    return `${window.location.origin}/api`;
+  }
+
   if (cachedWorkingPort) {
     return `http://127.0.0.1:${cachedWorkingPort}`;
   }

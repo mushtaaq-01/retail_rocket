@@ -25,11 +25,26 @@ from ml.db import (
     create_or_upsert_profile_in_db
 )
 
+import os
+from starlette.middleware.base import BaseHTTPMiddleware
+
 app = FastAPI(
     title="Retail AI Recommendation API",
     description="RetailRocket Product Recommendation System",
     version="1.0.0"
 )
+
+# Strip /api prefix middleware so endpoints work both with /api and without /api (for Vercel serverless)
+class StripPrefixMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        path = request.scope.get("path", "")
+        if path.startswith("/api/"):
+            request.scope["path"] = path[4:]
+        elif path == "/api":
+            request.scope["path"] = "/"
+        return await call_next(request)
+
+app.add_middleware(StripPrefixMiddleware)
 
 # Enable CORS for React Frontend
 app.add_middleware(
@@ -40,7 +55,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-MODEL_PATH = "model/recommendation_model.joblib"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODEL_PATH = os.path.join(BASE_DIR, "model", "recommendation_model.joblib")
 
 model_data = joblib.load(MODEL_PATH)
 
