@@ -11,12 +11,12 @@ async function getWorkingBaseUrl() {
     return customUrl.trim().replace(/\/+$/, '');
   }
 
-  // Production or Vercel deployment: relative '/api' calls Vercel serverless backend
+  // Production deployment on Vercel -> connect to live Render backend
   if (typeof window !== 'undefined' && window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-    return '/api';
+    return PRODUCTION_BACKEND_URL;
   }
 
-  // Local development -> Vite proxy redirects /api to configured backend port
+  // Local development -> Vite proxy redirects /api to backend
   return '/api';
 }
 
